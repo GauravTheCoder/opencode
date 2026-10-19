@@ -347,6 +347,7 @@ const Root = Spec.make(typeof OPENCODE_CLI_NAME === "string" ? OPENCODE_CLI_NAME
       description: "Start the minimal interactive interface",
       params: {
         ...ServerParams,
+        ...PermissionParams,
         continue: Flag.Boolean("continue").pipe(
           Flag.withAlias("c"),
           Flag.withDescription("Continue the last session"),
