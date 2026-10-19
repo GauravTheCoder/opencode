@@ -29,7 +29,6 @@ import { FOOTER_MENU_ROWS, RunFooterMenu } from "./footer.menu"
 import { RunFooterSubagentBody } from "./footer.subagent"
 import { RunPromptBody, createPromptState } from "./footer.prompt"
 import { promptAppend } from "./prompt.shared"
-import { promptOffsetWidth } from "../prompt/display"
 import { RunPermissionBody } from "./footer.permission"
 import { RunFormBody } from "./footer.form"
 import { createFormBodyState, type FormBodyState } from "./form.shared"
@@ -315,8 +314,8 @@ export function RunFooterView(props: RunFooterViewProps) {
       () => props.prefill?.(),
       (prompt) => {
         if (!prompt) return
-        const next = promptAppend(composer.current(), prompt)
-        composer.replacePrompt(next, promptOffsetWidth(next.text))
+        const next = promptAppend(composer.current(), prompt, renderer.widthMethod)
+        composer.replacePrompt(next)
       },
       { defer: true },
     ),
@@ -538,7 +537,7 @@ export function RunFooterView(props: RunFooterViewProps) {
       .join(props.mono ? " - " : " \u00b7 ")
     if (stringWidth(text) <= statusWidth() && !text.includes("\n")) return 1
     // Measure outside the clipped footer so wrapped required controls can grow it.
-    const buffer = TextBuffer.create(renderer.widthMethod)
+    const buffer = TextBuffer.create(renderer.widthMethod, renderer.nativeScene)
     const view = TextBufferView.create(buffer)
     buffer.setText(text)
     view.setWrapMode("word")
@@ -830,8 +829,9 @@ export function RunFooterView(props: RunFooterViewProps) {
                               }
                               if (!(await queuedPromptAction("cancel", item.messageID, "undo"))) return
                               closePanel()
-                              const next = promptAppend(composer.current(), item.prompt)
-                              composer.replacePrompt(next, promptOffsetWidth(next.text))
+                              composer.replacePrompt(
+                                promptAppend(composer.current(), item.prompt, renderer.widthMethod),
+                              )
                             }}
                             onDelete={(item) => {
                               void queuedPromptAction("cancel", item.messageID)
@@ -855,8 +855,8 @@ export function RunFooterView(props: RunFooterViewProps) {
                                 composer.submitText(`/${action.command}`)
                                 return
                               }
-                              const next = promptAppend(composer.current(), { text: `/${action.command} `, parts: [] })
-                              composer.replacePrompt(next, promptOffsetWidth(next.text))
+                              const next = promptAppend(composer.current(), { text: `/${action.command} `, parts: [] }, renderer.widthMethod)
+                              composer.replacePrompt(next)
                             }}
                             onClose={closePanel}
                             onAgent={openAgent}
