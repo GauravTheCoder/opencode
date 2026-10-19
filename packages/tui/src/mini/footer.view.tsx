@@ -956,6 +956,7 @@ export function RunFooterView(props: RunFooterViewProps) {
 
             <Show when={!panel() && menu()}>
               <RunFooterMenu
+                cursor
                 theme={theme}
                 items={composer.options}
                 selected={composer.selected}
