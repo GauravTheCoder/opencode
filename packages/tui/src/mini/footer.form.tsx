@@ -1,6 +1,6 @@
 /** @jsxImportSource @opentui/solid */
-import type { BoxRenderable, ScrollBoxRenderable, TextareaRenderable } from "@opentui/core"
-import { useKeyboard, useTerminalDimensions } from "@opentui/solid"
+import type { BoxRenderable, Renderable, ScrollBoxRenderable, TextareaRenderable } from "@opentui/core"
+import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
 import { For, Show, createEffect, createMemo, createSignal, onCleanup } from "solid-js"
 import {
   createFormBodyState,
@@ -47,7 +47,15 @@ export function RunFormBody(props: {
   mono?: boolean
   screenReader?: boolean
 }) {
+  const renderer = useRenderer()
   const dims = useTerminalDimensions()
+  // Screen readers announce the line under the terminal cursor, so park it on the selected choice.
+  const parkCursor = (active: boolean) =>
+    props.screenReader && active
+      ? function (this: Renderable) {
+          renderer.setCursorPosition(this.x + 1, this.y + 1, true)
+        }
+      : undefined
   const [size, setSize] = createSignal(dims())
   const [contentHeight, setContentHeight] = createSignal(1)
   const [viewportHeight, setViewportHeight] = createSignal(0)
@@ -437,6 +445,7 @@ export function RunFormBody(props: {
                             choices.set(index(), item)
                           }}
                           onSizeChange={revealChoice}
+                          renderAfter={parkCursor(active())}
                           flexShrink={0}
                           flexDirection="row"
                           gap={1}
@@ -485,6 +494,7 @@ export function RunFormBody(props: {
                         choices.set(rows().length, item)
                       }}
                       onSizeChange={revealChoice}
+                      renderAfter={parkCursor(state().selected === rows().length)}
                       flexShrink={0}
                       flexDirection="row"
                       gap={1}
