@@ -441,6 +441,10 @@ export class RunFooter implements FooterApi {
     }
   }
 
+  public submit(prompt: RunPrompt): void {
+    this.handlePrompt(prompt)
+  }
+
   public onClose(fn: () => void): () => void {
     if (this.isClosed) {
       fn()

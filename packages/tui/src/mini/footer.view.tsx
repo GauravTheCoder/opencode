@@ -313,9 +313,7 @@ export function RunFooterView(props: RunFooterViewProps) {
     on(
       () => props.prefill?.(),
       (prompt) => {
-        if (!prompt) return
-        const next = promptAppend(composer.current(), prompt, renderer.widthMethod)
-        composer.replacePrompt(next)
+        if (prompt) composer.replacePrompt(prompt)
       },
       { defer: true },
     ),
@@ -386,6 +384,8 @@ export function RunFooterView(props: RunFooterViewProps) {
     openTab(next.sessionID)
   }
   const [promptRows, setPromptRows] = createSignal(1)
+  // A prefilled menu action borrows the composer; the draft it replaced comes back once that command is sent.
+  let stashed: { command: string; draft: RunPrompt } | undefined
   const composer = createPromptState({
     directory: props.directory,
     findFiles: props.findFiles,
@@ -404,7 +404,14 @@ export function RunFooterView(props: RunFooterViewProps) {
     history: props.history,
     queuedPrompts: queue,
     onQueuedPromptSteer: (inboxID) => queuedPromptAction("steer", inboxID),
-    onSubmit: props.onSubmit,
+    onSubmit: async (prompt) => {
+      const borrowed = stashed
+      stashed = undefined
+      const sent = await props.onSubmit(prompt)
+      if (sent && borrowed && prompt.text.trim().startsWith(`/${borrowed.command}`))
+        composer.replacePrompt(borrowed.draft)
+      return sent
+    },
     onCycle: props.onCycle,
     onInterrupt: props.onInterrupt,
     onEditorOpen: props.onEditorOpen,
@@ -855,8 +862,10 @@ export function RunFooterView(props: RunFooterViewProps) {
                                 composer.submitText(`/${action.command}`)
                                 return
                               }
-                              const next = promptAppend(composer.current(), { text: `/${action.command} `, parts: [] }, renderer.widthMethod)
-                              composer.replacePrompt(next)
+                              // Replace rather than append: the text must start with the slash to run locally.
+                              const draft = composer.current()
+                              if (draft.text.trim() || draft.parts.length) stashed = { command: action.command, draft }
+                              composer.replacePrompt({ text: `/${action.command} `, parts: [] })
                             }}
                             onClose={closePanel}
                             onAgent={openAgent}
