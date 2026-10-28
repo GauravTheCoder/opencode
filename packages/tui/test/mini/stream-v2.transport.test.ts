@@ -158,7 +158,9 @@ function sdk(input: {
 }) {
   const client = OpenCode.make({ baseUrl: "https://opencode.test" })
   let subscription = 0
-  spyOn(client.event, "subscribe").mockImplementation(() => input.streams[subscription++]?.stream ?? feed().stream)
+  spyOn(client.event, "subscribe").mockImplementation(
+    (() => input.streams[subscription++]?.stream ?? feed().stream) as OpenCodeClient["event"]["subscribe"],
+  )
   spyOn(client.message, "list").mockImplementation((request) =>
     ok({
       data: input.messages?.[request.sessionID] ?? [
